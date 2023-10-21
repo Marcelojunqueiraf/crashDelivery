@@ -6,11 +6,22 @@ export default class Car extends Phaser.Scene {
   carAcceleration = new Phaser.Math.Vector2(5, 0)
   friction = 0.01
   
-  preload() {}
+  preload() {
+    this.load.image("tiles", "/assets/tilemap.png");
+    this.load.tilemapTiledJSON("map", "/assets/map.json");
+  }
+
   create() {
+
+    const map = this.make.tilemap({ key: "map", tileWidth: 16, tileHeight: 16 });
+    // Parameters are the name you gave the Tiled Editor and then the key of the tileset image in loadImage
+    const tileset = map.addTilesetImage("tiles1", "tiles");
+    // Parameters: layer name from Tiled Editor, tileset, x, y
+    const layer = map.createLayer("street", tileset, 0, 0)
+
     this.car = this.add.rectangle(400, 300, 30, 15, 0xff5555);
     this.physics.add.existing(this.car);
-    this.car.body.setCollideWorldBounds(true);
+    //this.car.body.setCollideWorldBounds(true);
     this.car.body.setBounce(1, 1);
 
     this.wall = this.add.rectangle(50, 400, 20, 100, 0xffffff);
@@ -19,7 +30,9 @@ export default class Car extends Phaser.Scene {
 
     this.physics.add.collider(this.car, this.wall);
 
+    this.cameras.main.startFollow(this.car);
 
+    
   }
   update() {
     const up = this.input.keyboard.addKey("up");
