@@ -1,11 +1,11 @@
 import Phaser from "phaser";
+import { toRadians } from "../utils/toRadian";
 
 export default class Car extends Phaser.Scene {
-  speed = 0.1;
-  angle = 0;
-  airResist = 0.005;
-  // car: Phaser.GameObjects.Rectangle;
-  // wall: Phaser.GameObjects.Rectangle;
+
+  carAcceleration = new Phaser.Math.Vector2(5, 0)
+  friction = 0.01
+  
   preload() {}
   create() {
     this.car = this.add.rectangle(400, 300, 30, 15, 0xff5555);
@@ -18,6 +18,8 @@ export default class Car extends Phaser.Scene {
     this.wall.body.setImmovable(true);
 
     this.physics.add.collider(this.car, this.wall);
+
+
   }
   update() {
     const up = this.input.keyboard.addKey("up");
@@ -25,36 +27,24 @@ export default class Car extends Phaser.Scene {
     const left = this.input.keyboard.addKey("left");
     const right = this.input.keyboard.addKey("right");
 
-    if (up.isDown) {
-      this.car.body.velocity.x += Math.cos(this.car.body.rotation) * 100;
-      this.car.body.velocity.y += Math.sin(this.car.body.rotation) * 100;
-    } else if (down.isDown) {
-      this.car.body.velocity.x -= Math.cos(this.car.body.rotation) * 100;
-      this.car.body.velocity.y -= Math.sin(this.car.body.rotation) * 100;
-    }
 
-    this.speed = Math.sqrt(
-      this.car.body.velocity.x * this.car.body.velocity.x +
-        this.car.body.velocity.y * this.car.body.velocity.y
-    );
+    if (up.isDown) {
+      this.carAcceleration.setAngle(toRadians(this.car.body.rotation))
+      this.car.body.velocity.add(this.carAcceleration)
+    } else if (down.isDown) {
+      this.carAcceleration.setAngle(toRadians(this.car.body.rotation))
+      this.car.body.velocity.subtract(this.carAcceleration)
+    } 
 
     if (left.isDown) {
-      this.car.body.rotation -= 0.01 * this.speed;
+      this.car.body.rotation -= 5;
     } else if (right.isDown) {
-      this.car.body.rotation += 0.01 * this.speed;
+      this.car.body.rotation += 5;
     }
 
-    const acceleration = 0.0 + this.airResist * this.speed * this.speed;
-    if (this.speed > 0) {
-      this.car.body.velocity.x -=
-        Math.cos(this.car.body.rotation) * acceleration;
-      this.car.body.velocity.y -=
-        Math.sin(this.car.body.rotation) * acceleration;
-    } else {
-      this.car.body.velocity.x +=
-        Math.cos(this.car.body.rotation) * acceleration;
-      this.car.body.velocity.y +=
-        Math.sin(this.car.body.rotation) * acceleration;
-    }
+    // Friction
+    if (this.car.body.velocity.length() > 0) 
+      this.car.body.velocity.subtract(this.car.body.velocity.clone().scale(this.friction))
   }
+
 }
