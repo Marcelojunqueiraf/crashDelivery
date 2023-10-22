@@ -1,10 +1,11 @@
 import Phaser from "phaser";
-import { toRadians } from "../utils/toRadian";
+import { toRadians } from "../utils/toRadians";
+import { Angle } from "../utils/angle";
 
 export default class Car extends Phaser.Scene {
   carAcceleration = new Phaser.Math.Vector2(5, 0);
   friction = 0.01;
-  counter = 0;
+  carRotation = new Angle(135)
   preload() {
     this.load.image("tiles", "/assets/tilemap.png");
     this.load.tilemapTiledJSON("map", "/assets/map.json");
@@ -44,7 +45,7 @@ export default class Car extends Phaser.Scene {
         start: 0,
         end: totalFrames - 1,
       }),
-      frameRate: 10,
+      frameRate: 15,
       repeat: -1,
     });
 
@@ -54,7 +55,7 @@ export default class Car extends Phaser.Scene {
         start: totalFrames - 1,
         end: 0,
       }),
-      frameRate: 10,
+      frameRate: 15,
       repeat: -1,
     });
 
@@ -62,7 +63,7 @@ export default class Car extends Phaser.Scene {
 
     this.car.anims.play("left", true);
     this.car.anims.play("right", true);
-    this.car.setFrame(10);
+    this.car.setFrame(0);
   }
   update() {
     const up = this.input.keyboard.addKey("up");
@@ -76,27 +77,25 @@ export default class Car extends Phaser.Scene {
     else this.car.setSize(50, 32);
 
     if (up.isDown) {
-      this.carAcceleration.setAngle(toRadians(this.car.body.rotation));
+      this.carAcceleration.setAngle(toRadians(this.carRotation.value));
       this.car.body.velocity.add(this.carAcceleration);
     } else if (down.isDown) {
-      this.carAcceleration.setAngle(toRadians(this.car.body.rotation));
+      this.carAcceleration.setAngle(toRadians(this.carRotation.value));
       this.car.body.velocity.subtract(this.carAcceleration);
     }
 
     if (left.isDown) {
-      //this.car.body.rotation -= 5;
       const currentFrame = this.car.anims.currentFrame;
       this.car.anims.playReverse("left", true);
       this.car.anims.setCurrentFrame(currentFrame);
     } else if (right.isDown) {
-      //this.car.body.rotation += 5;
       const currentFrame = this.car.anims.currentFrame;
       this.car.anims.play("right", true);
       this.car.anims.setCurrentFrame(currentFrame);
     } else {
       this.car.anims.stop();
     }
-
+    this.carRotation.set(90 + (this.car.anims.currentFrame.index+1)*22.5 )
     // Friction
     if (this.car.body.velocity.length() > 0)
       this.car.body.velocity.subtract(
