@@ -37,7 +37,7 @@ export default class Car extends Phaser.Scene {
     this.physics.add.collider(this.car, buildingsLayer);
     detailsLayer.setCollisionByExclusion([-1]);
     this.physics.add.collider(this.car, detailsLayer);
-    
+
     // Bring intangible layer to the top
     intangibleLayer.setDepth(10);
 
@@ -53,30 +53,38 @@ export default class Car extends Phaser.Scene {
     // if ([6, 7, 8, 13, 14, 15].includes(this.car.anims.currentFrame?.index))
     this.car.setSize(32, 32);
     // else this.car.setSize(50, 32);
+    this.carAcceleration.setAngle(toRadians(this.carRotation));
 
-    if (up.isDown && this.car.body.velocity.length() < this.maxSpeed) {
-      this.carAcceleration.setAngle(toRadians(this.carRotation));
-      this.car.body.velocity.add(this.carAcceleration);
-    } else if (down.isDown) {
-      this.carAcceleration.setAngle(toRadians(this.carRotation));
-      this.car.body.velocity.subtract(this.carAcceleration);
-    }
+    if (this.car.body.velocity.length() < this.maxSpeed)
+      if (up.isDown) {
+        this.car.body.velocity.add(this.carAcceleration);
+      } else if (down.isDown) {
+        this.car.body.velocity.subtract(this.carAcceleration);
+      }
 
     if (left.isDown) {
       this.carRotation = (this.carRotation - 5) % 360;
     } else if (right.isDown) {
-      this.carRotation = (this.carRotation + 5) % 360;
+      this.carRotation = (this.carRotation +5) % 360;
     }
 
     // calculate frame using rotation 16 frames
     const rotation =
       this.carRotation > 0 ? this.carRotation : 360 + this.carRotation;
     const frame = (Math.round((16 * rotation) / 360) + 10) % 16;
+
     this.car.setFrame(frame);
 
-    this.car.body.velocity.setAngle(toRadians(this.carRotation));
+    const relativeVelocityAngle =
+      this.car.body.velocity.angle() - toRadians(this.carRotation);
+    if (
+      relativeVelocityAngle > toRadians(90) &&
+      relativeVelocityAngle < toRadians(270)
+    )
+      this.car.body.velocity.setAngle(toRadians(this.carRotation + 180));
+    else this.car.body.velocity.setAngle(toRadians(this.carRotation));
 
-    // Friction;
+    //Friction
     if (this.car.body.velocity.length() > 0)
       this.car.body.velocity.subtract(
         this.car.body.velocity.clone().scale(this.friction)
