@@ -1,11 +1,11 @@
 import Phaser from "phaser";
 import { toRadians } from "../utils/toRadians";
-import { Angle } from "../utils/angle";
 
 export default class Car extends Phaser.Scene {
-  carAcceleration = new Phaser.Math.Vector2(5, 0);
+  carAcceleration = new Phaser.Math.Vector2(10, 0);
   friction = 0.015;
-  carRotation = new Angle(135)
+  carRotation = 0;
+  maxSpeed = 300;
   preload() {
     this.load.image("tiles", "/assets/tilemap.png");
     this.load.tilemapTiledJSON("map", "/assets/map.json");
@@ -29,40 +29,12 @@ export default class Car extends Phaser.Scene {
     const detailsLayer = map.createLayer("details", tileset, 0, 0);
 
     this.car = this.physics.add.sprite(30, 15, "car");
-    this.car.body.setBounce(1, 1);
+    this.car.body.setBounce(0.5, 0.5);
 
     buildingsLayer.setCollisionByExclusion([-1]);
     this.physics.add.collider(this.car, buildingsLayer);
 
     this.cameras.main.startFollow(this.car);
-
-    const totalFrames = 16;
-
-    this.anims.create({
-      key: "right",
-      frames: this.anims.generateFrameNumbers("car", {
-        start: 0,
-        end: totalFrames - 1,
-      }),
-      frameRate: 15,
-      repeat: -1,
-    });
-
-    this.anims.create({
-      key: "left",
-      frames: this.anims.generateFrameNumbers("car", {
-        start: totalFrames - 1,
-        end: 0,
-      }),
-      frameRate: 15,
-      repeat: -1,
-    });
-
-    this.car.setSize(50, 32);
-
-    this.car.anims.play("left", true);
-    this.car.anims.play("right", true);
-    this.car.setFrame(0);
   }
   update() {
     const up = this.input.keyboard.addKey("up");
@@ -71,32 +43,33 @@ export default class Car extends Phaser.Scene {
     const right = this.input.keyboard.addKey("right");
 
     // Adjust hitbox
-    if ([6, 7, 8, 13, 14, 15].includes(this.car.anims.currentFrame?.index))
-      this.car.setSize(32, 32);
-    else this.car.setSize(50, 32);
+    // if ([6, 7, 8, 13, 14, 15].includes(this.car.anims.currentFrame?.index))
+    this.car.setSize(32, 32);
+    // else this.car.setSize(50, 32);
 
-    if (up.isDown) {
-      this.carAcceleration.setAngle(toRadians(this.carRotation.value));
+    if (up.isDown && this.car.body.velocity.length() < this.maxSpeed) {
+      this.carAcceleration.setAngle(toRadians(this.carRotation));
       this.car.body.velocity.add(this.carAcceleration);
-    } else if (down.isDown) {
-      this.carAcceleration.setAngle(toRadians(this.carRotation.value));
+    } else if (down.isDown && this.car.body.velocity.length() > 0) {
+      this.carAcceleration.setAngle(toRadians(this.carRotation));
       this.car.body.velocity.subtract(this.carAcceleration);
     }
 
     if (left.isDown) {
-      const currentFrame = this.car.anims.currentFrame;
-      this.car.anims.playReverse("left", true);
-      this.car.anims.setCurrentFrame(currentFrame);
+      this.carRotation = (this.carRotation - 5) % 360;
     } else if (right.isDown) {
-      const currentFrame = this.car.anims.currentFrame;
-      this.car.anims.play("right", true);
-      this.car.anims.setCurrentFrame(currentFrame);
-    } else {
-      this.car.anims.stop();
+      this.carRotation = (this.carRotation + 5) % 360;
     }
-    this.carRotation.set(90 + (this.car.anims.currentFrame.index+1)*22.5 )
-    this.car.body.velocity.setAngle(toRadians(this.carRotation.value));
-    // Friction
+
+    // calculate frame using rotation 16 frames
+    const rotation =
+      this.carRotation > 0 ? this.carRotation : 360 + this.carRotation;
+    const frame = (Math.round((16 * rotation) / 360) + 10) % 16;
+    this.car.setFrame(frame);
+
+    this.car.body.velocity.setAngle(toRadians(this.carRotation));
+
+    // Friction;
     if (this.car.body.velocity.length() > 0)
       this.car.body.velocity.subtract(
         this.car.body.velocity.clone().scale(this.friction)
