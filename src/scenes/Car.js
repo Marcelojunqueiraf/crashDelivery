@@ -25,16 +25,23 @@ export default class Car extends Phaser.Scene {
     const tileset = map.addTilesetImage("tiles", "tiles");
     // Parameters: layer name from Tiled Editor, tileset, x, y
     const streetsLayer = map.createLayer("streets", tileset, 0, 0);
+    const sidewalkLayer = map.createLayer("sidewalk", tileset, 0, 0);
     const buildingsLayer = map.createLayer("buildings", tileset, 0, 0);
     const detailsLayer = map.createLayer("details", tileset, 0, 0);
+    const intangibleLayer = map.createLayer("intangible", tileset, 0, 0);
 
     this.car = this.physics.add.sprite(30, 15, "car");
     this.car.body.setBounce(0.5, 0.5);
 
     buildingsLayer.setCollisionByExclusion([-1]);
     this.physics.add.collider(this.car, buildingsLayer);
+    detailsLayer.setCollisionByExclusion([-1]);
+    this.physics.add.collider(this.car, detailsLayer);
+    
+    // Bring intangible layer to the top
+    intangibleLayer.setDepth(10);
 
-    this.cameras.main.startFollow(this.car);
+    this.cameras.main.startFollow(this.car).setZoom(1.5);
   }
   update() {
     const up = this.input.keyboard.addKey("up");
@@ -50,7 +57,7 @@ export default class Car extends Phaser.Scene {
     if (up.isDown && this.car.body.velocity.length() < this.maxSpeed) {
       this.carAcceleration.setAngle(toRadians(this.carRotation));
       this.car.body.velocity.add(this.carAcceleration);
-    } else if (down.isDown && this.car.body.velocity.length() > 0) {
+    } else if (down.isDown) {
       this.carAcceleration.setAngle(toRadians(this.carRotation));
       this.car.body.velocity.subtract(this.carAcceleration);
     }
