@@ -4,7 +4,7 @@ import { Angle } from "../utils/angle";
 
 export default class Car extends Phaser.Scene {
   carAcceleration = new Phaser.Math.Vector2(5, 0);
-  friction = 0.01;
+  friction = 0.015;
   carRotation = new Angle(135)
   preload() {
     this.load.image("tiles", "/assets/tilemap.png");
@@ -37,7 +37,6 @@ export default class Car extends Phaser.Scene {
     this.cameras.main.startFollow(this.car);
 
     const totalFrames = 16;
-    const frames = [...Array(totalFrames).keys()];
 
     this.anims.create({
       key: "right",
@@ -96,6 +95,7 @@ export default class Car extends Phaser.Scene {
       this.car.anims.stop();
     }
     this.carRotation.set(90 + (this.car.anims.currentFrame.index+1)*22.5 )
+    this.car.body.velocity.setAngle(toRadians(this.carRotation.value));
     // Friction
     if (this.car.body.velocity.length() > 0)
       this.car.body.velocity.subtract(
